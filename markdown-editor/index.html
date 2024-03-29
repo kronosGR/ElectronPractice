@@ -24,7 +24,7 @@
   </style>
 </head>
 
-<body>
+<body ondrop="dropHandler(event);">
   <h1>Editor</h1>
   <textarea id="editor"></textarea>
 
@@ -55,6 +55,27 @@
         editor.value(content);
       }
     })
+
+    function dropHandler(event) {
+      console.log('File(s) dropped');
+      event.preventDefault();
+
+      if (event.dataTransfer.items) {
+        if (event.dataTransfer.items[0].kind === 'file') {
+          var file = event.dataTransfer.items[0].getAsFile();
+
+          if (file.type === 'text/markdown') {
+            var reader = new FileReader();
+            reader.onload = e => {
+              // console.log(e.target.result);
+              editor.codemirror.setValue(e.target.result);
+            };
+
+            reader.readAsText(file);
+          }
+        }
+      }
+    }
   </script>
 </body>
 
