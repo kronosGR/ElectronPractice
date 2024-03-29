@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon --exec electron .",
+    "start-debug": "DEBUG=true nodemon --exec electron .",
     "build:linux": "electron-builder --linux --dir",
     "dist:linux": "electron-builder --linux"
   },
