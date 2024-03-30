@@ -1,11 +1,14 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain, desktopCapturer } = require('electron');
 let win;
 
 function createWindow() {
   win = new BrowserWindow({
     transparent: true,
+    frame: false,
     webPreferences: {
       nodeIntegration: true,
+      contextIsolation: false,
+      enableRemoteModule: true,
     },
   });
 
@@ -29,3 +32,7 @@ app.on('activate', () => {
     createWindow();
   }
 });
+
+ipcMain.handle('DESKTOP_CAPTURER_GET_SOURCES', (event, opts) =>
+  desktopCapturer.getSources(opts)
+);
