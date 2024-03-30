@@ -4,7 +4,11 @@ let win;
 
 function createWindow() {
   win = new BrowserWindow({ width: 800, height: 600 });
-  win.loadURL(`file://${__dirname}/build/index.html`);
+  if (process.env.DEBUG) {
+    win.loadURL(`http://localhost:3000`);
+  } else {
+    win.loadURL(`file://${__dirname}/build/index.html`);
+  }
   win.on('closed', () => {
     win = null;
   });
