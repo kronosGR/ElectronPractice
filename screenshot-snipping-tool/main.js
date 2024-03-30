@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, desktopCapturer } = require('electron');
+const { app, BrowserWindow, ipcMain, desktopCapturer, screen } = require('electron');
 let win;
 
 function createWindow() {
@@ -36,3 +36,7 @@ app.on('activate', () => {
 ipcMain.handle('DESKTOP_CAPTURER_GET_SOURCES', (event, opts) =>
   desktopCapturer.getSources(opts)
 );
+
+ipcMain.handle('SCREEN_GET_PRIMARY_DISPLAY', (event) => {
+  return screen.getPrimaryDisplay();
+});

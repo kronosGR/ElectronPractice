@@ -4,18 +4,36 @@ import './App.css';
 import { Navbar, Button, Alignment, Icon } from '@blueprintjs/core';
 
 const onSnipClick = async () => {
-  const { remote, ipcRenderer } = window.require('electron');
-  //const screen = await remote.screen;
+  const { ipcRenderer, shell } = window.require('electron');
+
+  const path = window.require('path');
+  const os = window.require('os');
+  const fs = window.require('fs');
 
   try {
+    const pmDisplay = await ipcRenderer.invoke('SCREEN_GET_PRIMARY_DISPLAY');
+    const screenSize = pmDisplay.workAreaSize;
+    const maxDimension = Math.max(screenSize.width, screenSize.height);
+    console.log('display', maxDimension);
     const sources = await ipcRenderer.invoke('DESKTOP_CAPTURER_GET_SOURCES', {
       types: ['screen'],
+      thumbnailSize: {
+        width: maxDimension * window.devicePixelRatio,
+        height: maxDimension * window.devicePixelRatio,
+      },
     });
     const entireScreenSource = sources.find(
       (source) => source.name === 'Entire Screen' || source.name === 'Screen 1'
     );
     if (entireScreenSource) {
-      console.log(entireScreenSource);
+      const outputPath = path.join(os.tmpdir(), 'screenshot.png');
+      const image = entireScreenSource.thumbnail.toPNG();
+      fs.writeFile(outputPath, image, (err) => {
+        if (err) return console.error(err);
+        shell.openExternal(`file://${outputPath}`);
+      });
+    } else {
+      window.alert('Screen source not found');
     }
   } catch (err) {
     console.error(err);
