@@ -1,5 +1,45 @@
-const { app, BrowserWindow, ipcMain, desktopCapturer, screen } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  ipcMain,
+  desktopCapturer,
+  screen,
+  Menu,
+  Tray,
+  globalShortcut,
+} = require('electron');
+const path = require('path');
+
 let win;
+let tray;
+
+function createTray() {
+  const iconPath = path.join(__dirname, 'assets/icon.png');
+  tray = new Tray(iconPath);
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Show',
+      type: 'normal',
+      accelerator: 'CommandOrControl+Alt+Shift+S',
+      click() {
+        win.show();
+      },
+    },
+    {
+      label: 'Quit',
+      type: 'normal',
+      click() {
+        app.quit();
+      },
+    },
+  ]);
+  tray.setToolTip('screenshot');
+  tray.setContextMenu(contextMenu);
+
+  globalShortcut.register('CommandOrControl+Alt+Shift+S', () => {
+    if (win) win.show();
+  });
+}
 
 function createWindow() {
   win = new BrowserWindow({
@@ -12,6 +52,7 @@ function createWindow() {
     },
   });
 
+  win.hide();
   win.loadURL(`http://localhost:3000`);
 
   win.on('closed', () => {
@@ -20,6 +61,7 @@ function createWindow() {
 }
 
 app.on('ready', () => {
+  createTray();
   createWindow();
 });
 

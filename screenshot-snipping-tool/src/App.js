@@ -27,7 +27,15 @@ const onSnipClick = async () => {
     );
     if (entireScreenSource) {
       const outputPath = path.join(os.tmpdir(), 'screenshot.png');
-      const image = entireScreenSource.thumbnail.toPNG();
+      const image = entireScreenSource.thumbnail
+        .resize({ width: screenSize.width, height: screenSize.height })
+        .crop({
+          x: window.screenLeft,
+          y: window.screenTop,
+          width: window.innerWidth,
+          height: window.outerHeight,
+        })
+        .toPNG();
       fs.writeFile(outputPath, image, (err) => {
         if (err) return console.error(err);
         shell.openExternal(`file://${outputPath}`);
