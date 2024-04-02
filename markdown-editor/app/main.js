@@ -3,32 +3,59 @@ const fs = require('fs');
 
 require('@electron/remote/main').initialize();
 
-let mainWindow = null;
+// let mainWindow = null;
+const windows = new Set();
 
-app.on('ready', () => {
-  mainWindow = new BrowserWindow({
+const createWindow = (exports.createWindow = () => {
+  let newWindow = new BrowserWindow({
     show: false,
     webPreferences: {
+      enableRemoteModule: true,
       nodeIntegration: true,
       contextIsolation: false,
-      enableRemoteModule: true,
     },
   });
-  require('@electron/remote/main').enable(mainWindow.webContents);
-  mainWindow.loadFile('./app/index.html');
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
-    //getFileFromUser();
-    mainWindow.webContents.openDevTools();
+
+  require('@electron/remote/main').enable(newWindow.webContents);
+  newWindow.loadFile('./app/index.html');
+  newWindow.on('ready-to-show', () => {
+    newWindow.show();
+    newWindow.webContents.openDevTools();
   });
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
+  newWindow.on('closed', () => {
+    windows.delete(newWindow);
+    newWindow = null;
   });
+
+  windows.add(newWindow);
+  return newWindow;
 });
 
-const getFileFromUser = (exports.getFileFromUser = async () => {
-  const files = await dialog.showOpenDialog(mainWindow, {
+app.on('ready', () => {
+  // mainWindow = new BrowserWindow({
+  //   show: false,
+  //   webPreferences: {
+  //     nodeIntegration: true,
+  //     contextIsolation: false,
+  //     enableRemoteModule: true,
+  //   },
+  // });
+  // require('@electron/remote/main').enable(mainWindow.webContents);
+  // mainWindow.loadFile('./app/index.html');
+  // mainWindow.once('ready-to-show', () => {
+  //   mainWindow.show();
+  //   //getFileFromUser();
+  //   mainWindow.webContents.openDevTools();
+  // });
+  // mainWindow.on('closed', () => {
+  //   mainWindow = null;
+  // });
+  createWindow();
+});
+
+const getFileFromUser = (exports.getFileFromUser = async (targetWindow) => {
+  const files = await dialog.showOpenDialog(targetWindow, {
     properties: ['openFile'],
     filters: [
       { name: 'Markdown files', extensions: ['md', 'markdown'] },
@@ -41,11 +68,11 @@ const getFileFromUser = (exports.getFileFromUser = async () => {
 
   if (files) {
     const file = files.filePaths[0];
-    openFile(file);
+    openFile(targetWindow, file);
   }
 });
 
-const openFile = (file) => {
+const openFile = (targetWindow, file) => {
   const content = fs.readFileSync(file).toString();
-  mainWindow.webContents.send('file-opened', file, content);
+  targetWindow.webContents.send('file-opened', file, content);
 };
