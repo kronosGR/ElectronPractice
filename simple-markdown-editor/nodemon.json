@@ -2,5 +2,5 @@
   "ignore": [
     "assets/"
   ],
-  "ext": "js, json, html, css"
+  "ext": "js, html, css"
 }
