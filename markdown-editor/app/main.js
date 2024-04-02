@@ -7,7 +7,18 @@ require('@electron/remote/main').initialize();
 const windows = new Set();
 
 const createWindow = (exports.createWindow = () => {
+  let x, y;
+  const currentWindow = BrowserWindow.getFocusedWindow();
+
+  if (currentWindow) {
+    const [currentWindowX, currentWindowY] = currentWindow.getPosition();
+    x = currentWindowX + 10;
+    y = currentWindowY + 10;
+  }
+
   let newWindow = new BrowserWindow({
+    x,
+    y,
     show: false,
     webPreferences: {
       enableRemoteModule: true,
@@ -52,6 +63,21 @@ app.on('ready', () => {
   //   mainWindow = null;
   // });
   createWindow();
+});
+
+app.on('window-all-closed', () => {
+  // for macOS
+  if (process.platform === 'darwin') {
+    return false;
+  }
+  app.quit();
+});
+
+app.on('activate', (event, hasVisibleWindows) => {
+  // for macOS
+  if (!hasVisibleWindows) {
+    createWindow();
+  }
 });
 
 const getFileFromUser = (exports.getFileFromUser = async (targetWindow) => {

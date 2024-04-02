@@ -1,6 +1,6 @@
 const { marked } = require('marked');
-const mainProcess = require('@electron/remote').require('./main');
 const remote = require('@electron/remote');
+const mainProcess = require('@electron/remote').require('./main');
 const { ipcRenderer } = require('electron');
 
 const markdownView = document.querySelector('#markdown');
