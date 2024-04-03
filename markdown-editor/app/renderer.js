@@ -15,9 +15,6 @@ const showFileButton = document.querySelector('#show-file');
 const openInDefaultButton = document.querySelector('#open-in-default');
 
 document.addEventListener('dragstart', (event) => event.preventDefault());
-document.addEventListener('dragover', (event) => event.preventDefault());
-document.addEventListener('dragleave', (event) => event.preventDefault());
-document.addEventListener('drop', (event) => event.preventDefault());
 
 const currentWindow = remote.getCurrentWindow();
 
@@ -32,6 +29,7 @@ const fileTypeIsSupported = (file) => {
 };
 
 markdownView.addEventListener('dragover', (event) => {
+  event.preventDefault();
   const file = getDraggedFile(event);
 
   if (fileTypeIsSupported(file)) {
@@ -42,11 +40,14 @@ markdownView.addEventListener('dragover', (event) => {
 });
 
 markdownView.addEventListener('dragleave', () => {
+  event.preventDefault();
   markdownView.classList.remove('drag-over');
   markdownView.classList.remove('drag-error');
 });
 
 markdownView.addEventListener('drop', (event) => {
+  event.preventDefault();
+  event.stopPropagation();
   const file = getDroppedFile(event);
 
   if (file && fileTypeIsSupported(file)) {
@@ -90,12 +91,32 @@ const renderMarkdownToHTML = (markdown) => {
 };
 
 ipcRenderer.on('file-opened', (event, file, content) => {
-  filePath = file;
-  originalContent = content;
-  markdownView.value = content;
-  renderMarkdownToHTML(content);
+  if (currentWindow.isDocumentEdited()) {
+    const result = remote.dialog.showMessageBox(currentWindow, {
+      type: 'warning',
+      title: 'Overwrite Current unsaved changes',
+      message:
+        'Opening a new file in this window will overwrite your changes. Open this file anyway?',
+      buttons: ['Yes', 'Cancel'],
+      defaultId: 0,
+      cancelId: 1,
+    });
 
-  updateUserInterface();
+    if (result === 1) return;
+  }
+  renderFile(file.content);
+});
+
+ipcRenderer.on('file-changed', (event, file, content) => {
+  const result = remote.dialog.showMessageBox(currentWindow, {
+    type: 'warning',
+    title: 'Overwrite current unsaved changes?',
+    message: 'Another application has changed this file. Load changes?',
+    buttons: ['Yes', 'Cancel'],
+    defaultId: 0,
+    cancelId: 1,
+  });
+  renderFile(file, content);
 });
 
 const updateUserInterface = (isEdited) => {
@@ -113,4 +134,14 @@ const updateUserInterface = (isEdited) => {
 
   saveMarkdownButton.disabled = !isEdited;
   revertButton.disabled = !isEdited;
+};
+
+const renderFile = (file, content) => {
+  filePath = file;
+  originalContent = content;
+
+  markdownView.value = content;
+  renderMarkdownToHTML(content);
+
+  updateUserInterface(false);
 };
