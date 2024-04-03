@@ -1,7 +1,9 @@
-const { app, BrowserWindow, dialog, webContents } = require('electron');
+const { app, BrowserWindow, dialog, webContents, Menu } = require('electron');
 const fs = require('fs');
 
 require('@electron/remote/main').initialize();
+
+const applicationMenu = require('./application-menu');
 
 // let mainWindow = null;
 const windows = new Set();
@@ -80,6 +82,7 @@ app.on('ready', () => {
   // mainWindow.on('closed', () => {
   //   mainWindow = null;
   // });
+  Menu.setApplicationMenu(applicationMenu);
   createWindow();
 });
 

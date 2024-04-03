@@ -1,8 +1,9 @@
 const { marked } = require('marked');
 const remote = require('@electron/remote');
 const mainProcess = require('@electron/remote').require('./main');
-const { ipcRenderer } = require('electron');
+const { ipcRenderer, shell } = require('electron');
 const path = require('path');
+const { Menu } = remote;
 
 const markdownView = document.querySelector('#markdown');
 const htmlView = document.querySelector('#html');
@@ -14,8 +15,6 @@ const saveHtmlButton = document.querySelector('#save-html');
 const showFileButton = document.querySelector('#show-file');
 const openInDefaultButton = document.querySelector('#open-in-default');
 
-document.addEventListener('dragstart', (event) => event.preventDefault());
-
 const currentWindow = remote.getCurrentWindow();
 
 let filePath = null;
@@ -24,9 +23,27 @@ let originalContent = '';
 const getDraggedFile = (event) => event.dataTransfer.items[0];
 const getDroppedFile = (event) => event.dataTransfer.files[0];
 
+const showFile = () => {
+  if (!filePath) {
+    return alert('This file has not been saved to the filesystem');
+  }
+  shell.showItemInFolder(filePath);
+};
+
+const openInDefaultApplication = () => {
+  if (!filePath) {
+    return alert('This file has not been saved to the filesystem');
+  }
+  shell.openExternal(filePath);
+};
+
 const fileTypeIsSupported = (file) => {
   return ['text/plain', 'text/markdown'].includes(file.type);
 };
+
+document.addEventListener('dragstart', (event) => event.preventDefault());
+showFileButton.addEventListener('click', showFile);
+openInDefaultButton.addEventListener('click', openInDefaultApplication);
 
 markdownView.addEventListener('dragover', (event) => {
   event.preventDefault();
@@ -78,6 +95,11 @@ markdownView.addEventListener('keyup', (event) => {
   updateUserInterface(currentContent !== originalContent);
 });
 
+markdownView.addEventListener('contextmenu', (event) => {
+  event.preventDefault();
+  markdownContextMenu.popup();
+});
+
 openFileButton.addEventListener('click', () => {
   mainProcess.getFileFromUser(currentWindow);
 });
@@ -104,7 +126,7 @@ ipcRenderer.on('file-opened', (event, file, content) => {
 
     if (result === 1) return;
   }
-  renderFile(file.content);
+  renderFile(file, content);
 });
 
 ipcRenderer.on('file-changed', (event, file, content) => {
@@ -117,6 +139,14 @@ ipcRenderer.on('file-changed', (event, file, content) => {
     cancelId: 1,
   });
   renderFile(file, content);
+});
+
+ipcRenderer.on('save-markdown', () => {
+  mainProcess.saveMarkdown(currentWindow, filePath, markdownView.value);
+});
+
+ipcRenderer.on('save-html', () => {
+  mainProcess.saveHtml(currentWindow, filePath, markdownView.value);
 });
 
 const updateUserInterface = (isEdited) => {
@@ -143,5 +173,24 @@ const renderFile = (file, content) => {
   markdownView.value = content;
   renderMarkdownToHTML(content);
 
+  showFileButton.disabled = false;
+  openInDefaultButton.disabled = false;
+
   updateUserInterface(false);
 };
+
+const markdownContextMenu = Menu.buildFromTemplate([
+  {
+    label: 'Open File',
+    click() {
+      mainProcess.getFileFromUser();
+    },
+  },
+  {
+    type: 'separator',
+  },
+  { label: 'Cut', role: 'cut' },
+  { label: 'Copy', role: 'copy' },
+  { label: 'Paste', role: 'paste' },
+  { label: 'Select All', role: 'selectAll' },
+]);
