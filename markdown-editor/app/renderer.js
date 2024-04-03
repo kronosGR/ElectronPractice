@@ -25,7 +25,7 @@ let filePath = null;
 let originalContent = '';
 
 const getDraggedFile = (event) => event.dataTransfer.items[0];
-const detDroppedFile = (event) => event.dataTransfer.files[0];
+const getDroppedFile = (event) => event.dataTransfer.files[0];
 
 const fileTypeIsSupported = (file) => {
   return ['text/plain', 'text/markdown'].includes(file.type);
@@ -42,6 +42,18 @@ markdownView.addEventListener('dragover', (event) => {
 });
 
 markdownView.addEventListener('dragleave', () => {
+  markdownView.classList.remove('drag-over');
+  markdownView.classList.remove('drag-error');
+});
+
+markdownView.addEventListener('drop', (event) => {
+  const file = getDroppedFile(event);
+
+  if (file && fileTypeIsSupported(file)) {
+    mainProcess.openFile(currentWindow, file.path);
+  } else {
+    alert('The file is not supported');
+  }
   markdownView.classList.remove('drag-over');
   markdownView.classList.remove('drag-error');
 });
