@@ -97,7 +97,7 @@ markdownView.addEventListener('keyup', (event) => {
 
 markdownView.addEventListener('contextmenu', (event) => {
   event.preventDefault();
-  markdownContextMenu.popup();
+  createContextMenu().popup();
 });
 
 openFileButton.addEventListener('click', () => {
@@ -149,6 +149,9 @@ ipcRenderer.on('save-html', () => {
   mainProcess.saveHtml(currentWindow, filePath, markdownView.value);
 });
 
+ipcRenderer.on('show-file', showFile);
+ipcRenderer.on('open-in-default', openInDefaultApplication);
+
 const updateUserInterface = (isEdited) => {
   let title = 'Markdown Editor';
 
@@ -179,18 +182,30 @@ const renderFile = (file, content) => {
   updateUserInterface(false);
 };
 
-const markdownContextMenu = Menu.buildFromTemplate([
-  {
-    label: 'Open File',
-    click() {
-      mainProcess.getFileFromUser();
+const createContextMenu = () => {
+  return Menu.buildFromTemplate([
+    {
+      label: 'Open File',
+      click() {
+        mainProcess.getFileFromUser();
+      },
     },
-  },
-  {
-    type: 'separator',
-  },
-  { label: 'Cut', role: 'cut' },
-  { label: 'Copy', role: 'copy' },
-  { label: 'Paste', role: 'paste' },
-  { label: 'Select All', role: 'selectAll' },
-]);
+    {
+      label: 'Show File in Folder',
+      click: showFile,
+      enabled: !!filePath,
+    },
+    {
+      label: 'Open in Default Editor',
+      click: openInDefaultApplication,
+      enabled: !!filePath,
+    },
+    {
+      type: 'separator',
+    },
+    { label: 'Cut', role: 'cut' },
+    { label: 'Copy', role: 'copy' },
+    { label: 'Paste', role: 'paste' },
+    { label: 'Select All', role: 'selectAll' },
+  ]);
+};

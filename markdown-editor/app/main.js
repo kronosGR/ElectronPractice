@@ -1,5 +1,6 @@
 const { app, BrowserWindow, dialog, webContents, Menu } = require('electron');
 const fs = require('fs');
+const createApplicationMenu = require('./application-menu');
 
 require('@electron/remote/main').initialize();
 
@@ -32,6 +33,8 @@ const createWindow = (exports.createWindow = () => {
 
   require('@electron/remote/main').enable(newWindow.webContents);
   newWindow.loadFile('./app/index.html');
+
+  newWindow.on('focus', createApplicationMenu);
   newWindow.on('ready-to-show', () => {
     newWindow.show();
     newWindow.webContents.openDevTools();
@@ -40,6 +43,7 @@ const createWindow = (exports.createWindow = () => {
   newWindow.on('closed', () => {
     windows.delete(newWindow);
     stopWatchingFile(newWindow);
+    createApplicationMenu();
     newWindow = null;
   });
 
@@ -82,7 +86,7 @@ app.on('ready', () => {
   // mainWindow.on('closed', () => {
   //   mainWindow = null;
   // });
-  Menu.setApplicationMenu(applicationMenu);
+  createApplicationMenu();
   createWindow();
 });
 
@@ -132,7 +136,9 @@ const openFile = (exports.openFile = (targetWindow, file) => {
   const content = fs.readFileSync(file).toString();
   app.addRecentDocument(file);
   targetWindow.setRepresentedFilename(file);
+  targetWindow.setRepresentedFilename(file);
   targetWindow.webContents.send('file-opened', file, content);
+  createApplicationMenu();
 });
 
 const saveHtml = (exports.saveHtml = (targetWindow, content) => {
