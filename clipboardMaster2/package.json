@@ -2,11 +2,19 @@
   "name": "clipboardmaster2",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./app/main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron .",
+    "dev": "nodemon --exec electron ."
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^27.0.0"
+  },
+  "dependencies": {
+    "menubar": "^9.4.0"
+  }
 }
