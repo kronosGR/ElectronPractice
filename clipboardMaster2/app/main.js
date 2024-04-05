@@ -24,7 +24,6 @@ menuBar.on('ready', () => {
     },
   ]);
   menuBar.tray.on('right-click', () => {
-    console.log('aaa');
     menuBar.tray.popUpContextMenu(secondaryMenu);
   });
 
